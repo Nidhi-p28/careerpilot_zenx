@@ -11,7 +11,7 @@ interface Props {
 
 export default function Wizard({ userId, onComplete }: Props) {
   const [messages, setMessages] = useState([
-    { role: "assistant", content: "Hi! I'm CareerPilot. Let's set up your career profile. What career are you aiming for?" }
+    { role: "assistant", content: "System initialized. I'm CareerPilot. To build your autonomous profile, I need to understand your trajectory. What career path are we targeting?" }
   ])
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
@@ -22,7 +22,7 @@ export default function Wizard({ userId, onComplete }: Props) {
   }, [messages])
 
   const send = async () => {
-    if (!input.trim()) return
+    if (!input.trim() || loading) return
     const userMsg = input.trim()
     setInput("")
     setMessages(prev => [...prev, { role: "user", content: userMsg }])
@@ -40,68 +40,238 @@ export default function Wizard({ userId, onComplete }: Props) {
       }])
 
       if (res.data.profile_complete) {
-        setTimeout(() => onComplete(res.data.profile), 1000)
+        setTimeout(() => onComplete(res.data.profile), 1500)
       }
     } catch {
       setMessages(prev => [...prev, {
         role: "assistant",
-        content: "Something went wrong. Please try again."
+        content: "Signal interrupted. Re-establishing connection..."
       }])
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <div className="w-full max-w-2xl">
+    <div className="cp-shell">
+      {/* High-Visibility Industrial Grid */}
+      <div className="cp-industrial-grid" />
 
+      <div className="cp-container">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-blue-400">CareerPilot</h1>
-          <p className="text-gray-400 mt-2">Your Autonomous Career Intelligence System</p>
-        </div>
-
-        {/* Chat */}
-        <div className="bg-gray-900 rounded-2xl p-4 h-96 overflow-y-auto flex flex-col gap-3 mb-4">
-          {messages.map((m, i) => (
-            <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl text-sm ${
-                m.role === "user"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-800 text-gray-100"
-              }`}>
-                {m.content}
-              </div>
+        <header className="cp-header">
+          <div className="cp-brand">
+            <div className="cp-logo">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="3">
+                <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
             </div>
-          ))}
-          {loading && (
-            <div className="flex justify-start">
-              <div className="bg-gray-800 px-4 py-2 rounded-2xl text-gray-400 text-sm">
-                Thinking...
-              </div>
+            <div className="cp-text">
+              <h1 className="cp-title">CAREERPILOT <span className="cp-ver">v3.0</span></h1>
+              <p className="cp-status">STATUS: SYSTEM_READY // ORANGE_PROTOCOL_ACTIVE</p>
             </div>
-          )}
-          <div ref={bottomRef} />
-        </div>
+          </div>
+        </header>
 
-        {/* Input */}
-        <div className="flex gap-2">
-          <input
-            className="flex-1 bg-gray-800 rounded-xl px-4 py-3 text-white outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Type your answer..."
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && send()}
-          />
-          <button
-            onClick={send}
-            disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl font-medium disabled:opacity-50"
-          >
-            Send
-          </button>
+        {/* Broad Terminal Window */}
+        <div className="cp-window">
+          <div className="cp-log">
+            {messages.map((m, i) => (
+              <div key={i} className={`cp-row ${m.role === "user" ? "user" : "ai"}`}>
+                <div className="cp-bubble">
+                  {m.content}
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="cp-row ai">
+                <div className="cp-bubble loading-state">
+                  <span></span><span></span><span></span>
+                </div>
+              </div>
+            )}
+            <div ref={bottomRef} />
+          </div>
+
+          {/* Input Interface */}
+          <div className="cp-input-zone">
+            <input
+              className="cp-main-input"
+              placeholder="AWAITING INPUT..."
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && send()}
+            />
+            <button className="cp-enter-btn" onClick={send} disabled={loading}>
+              ENTER
+            </button>
+          </div>
+          <footer className="cp-sub-footer">
+            ENCRYPTION: AES-256 // TERMINAL: 0.0.0.1 // THEME: INDUSTRIAL_ORANGE
+          </footer>
         </div>
       </div>
+
+      <style jsx>{`
+        .cp-shell {
+          height: 100vh;
+          width: 100vw;
+          background-color: #0a0a0a;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+          overflow: hidden;
+          font-family: 'Inter', 'Segoe UI', sans-serif;
+        }
+
+        /* The Moving Background Grid */
+        .cp-industrial-grid {
+          position: absolute;
+          inset: 0;
+          background-image: 
+            linear-gradient(to right, rgba(249, 115, 22, 0.07) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(249, 115, 22, 0.07) 1px, transparent 1px);
+          background-size: 60px 60px;
+          animation: moveGrid 30s linear infinite;
+          z-index: 1;
+        }
+
+        @keyframes moveGrid {
+          from { background-position: 0 0; }
+          to { background-position: 60px 60px; }
+        }
+
+        .cp-container {
+          width: 92%;
+          max-width: 1100px;
+          height: 85vh;
+          display: flex;
+          flex-direction: column;
+          z-index: 10;
+        }
+
+        .cp-header {
+          margin-bottom: 12px;
+          padding: 0 4px;
+        }
+
+        .cp-brand { display: flex; align-items: center; gap: 14px; }
+        .cp-logo {
+          background: #171717;
+          border: 1px solid #404040;
+          padding: 10px;
+          border-radius: 4px;
+        }
+
+        .cp-title { font-size: 14px; font-weight: 900; margin: 0; letter-spacing: 2px; color: #fff; }
+        .cp-ver { color: #f97316; font-size: 10px; }
+        .cp-status { font-size: 9px; color: #737373; margin: 4px 0 0 0; font-family: monospace; letter-spacing: 1px; }
+
+        .cp-window {
+          flex: 1;
+          background: #111111;
+          border: 1px solid #262626;
+          border-radius: 4px;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .cp-log {
+          flex: 1;
+          overflow-y: auto;
+          padding: 40px;
+          display: flex;
+          flex-direction: column;
+          gap: 28px;
+        }
+
+        .cp-row { display: flex; width: 100%; }
+        .cp-row.ai { justify-content: flex-start; }
+        .cp-row.user { justify-content: flex-end; }
+
+        .cp-bubble {
+          max-width: 75%;
+          padding: 16px 20px;
+          font-size: 14px;
+          line-height: 1.6;
+        }
+
+        .ai .cp-bubble {
+          background: #1a1a1a;
+          border-left: 3px solid #f97316;
+          color: #d4d4d4;
+        }
+
+        .user .cp-bubble {
+          background: #f97316;
+          color: #000;
+          font-weight: 700;
+          border-radius: 2px;
+        }
+
+        .cp-input-zone {
+          padding: 24px 40px;
+          background: #0d0d0d;
+          border-top: 1px solid #262626;
+          display: flex;
+          gap: 16px;
+        }
+
+        .cp-main-input {
+          flex: 1;
+          background: #000;
+          border: 1px solid #404040;
+          padding: 14px 20px;
+          color: #fff;
+          outline: none;
+          font-family: monospace;
+          font-size: 14px;
+        }
+
+        .cp-main-input:focus { border-color: #f97316; }
+
+        .cp-enter-btn {
+          background: #f97316;
+          color: #000;
+          border: none;
+          padding: 0 30px;
+          font-size: 11px;
+          font-weight: 900;
+          letter-spacing: 2px;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+
+        .cp-enter-btn:hover { background: #fb923c; }
+        .cp-enter-btn:disabled { background: #404040; color: #737373; cursor: not-allowed; }
+
+        .cp-sub-footer {
+          background: #0a0a0a;
+          font-size: 8px;
+          color: #404040;
+          letter-spacing: 2px;
+          text-align: center;
+          padding: 10px;
+          font-family: monospace;
+          border-top: 1px solid #1a1a1a;
+        }
+
+        .loading-state { display: flex; gap: 6px; }
+        .loading-state span { 
+          width: 5px; height: 5px; background: #f97316; border-radius: 50%; 
+          animation: blink 1s infinite alternate; 
+        }
+        .loading-state span:nth-child(2) { animation-delay: 0.2s; }
+        .loading-state span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes blink { from { opacity: 0.2; } to { opacity: 1; } }
+
+        .cp-log::-webkit-scrollbar { width: 4px; }
+        .cp-log::-webkit-scrollbar-thumb { background: #262626; }
+      `}</style>
     </div>
   )
 }
