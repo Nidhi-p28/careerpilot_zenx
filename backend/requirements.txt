@@ -1,0 +1,45 @@
+# Backend Framework
+fastapi
+uvicorn
+
+# LangGraph (Workflow + State)
+langchain
+langgraph
+langchain-openai
+
+# AutoGen (Multi-Agent Conflict)
+pyautogen
+
+# LLM - Featherless uses OpenAI-compatible API
+openai
+
+# Environment Variables
+python-dotenv
+
+# Web Scraping - BrightData
+requests
+beautifulsoup4
+httpx
+
+# Memory - User Behavior Learning
+mem0ai
+
+# Database
+supabase
+
+# Data Handling
+pydantic
+pandas
+orjson
+
+# Scheduling / Background Tasks
+apscheduler
+
+# Async Support
+aiofiles
+
+# Logging
+loguru
+
+# CORS
+python-multipart
