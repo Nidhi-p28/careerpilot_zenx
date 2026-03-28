@@ -13,7 +13,7 @@ MODEL = os.getenv("FEATHERLESS_MODEL")
 AGENTS = [
     "trend_agent", "roadmap_agent", "course_agent",
     "progress_agent", "scheduler_agent", "evaluation_agent",
-    "job_search_agent", "conflict_resolver", "human_approval", "END"
+    "job_search_agent", "outreach_agent", "conflict_resolver", "human_approval", "END"
 ]
 
 
@@ -50,6 +50,9 @@ Reason through:
 2. Is any agent output outdated or invalid?
 3. Is there a conflict that needs resolution?
 4. Does the user need to approve something?
+5. If 'job_ready' is True and 'jobs_found' exists, route to 'outreach_agent'.
+6. If 'outreach_agent' needs a resume but 'state.resume_path' is empty, 
+   set next_agent to 'human_approval' with a message to upload resume.
 
 Output ONLY this JSON:
 {{

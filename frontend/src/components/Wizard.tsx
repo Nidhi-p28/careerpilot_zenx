@@ -67,8 +67,7 @@ export default function Wizard({ userId, onComplete }: Props) {
               </svg>
             </div>
             <div className="cp-text">
-              <h1 className="cp-title">CAREERPILOT <span className="cp-ver">v3.0</span></h1>
-              <p className="cp-status">STATUS: SYSTEM_READY // ORANGE_PROTOCOL_ACTIVE</p>
+              <h1 className="cp-title">CAREERPILOT <span className="cp-ver"></span></h1>
             </div>
           </div>
         </header>
@@ -107,7 +106,7 @@ export default function Wizard({ userId, onComplete }: Props) {
             </button>
           </div>
           <footer className="cp-sub-footer">
-            ENCRYPTION: AES-256 // TERMINAL: 0.0.0.1 // THEME: INDUSTRIAL_ORANGE
+            
           </footer>
         </div>
       </div>

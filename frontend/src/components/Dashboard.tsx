@@ -6,15 +6,16 @@ import Approvals from "./Approvals"
 import ReasoningLog from "./ReasoningLog"
 import JobTracker from "./JobTracker"
 import AgentStatus from "./AgentStatus"
+import ResumeUpload from "./ResumeUpload"
 
-const API = "http://localhost:8000"
+// Using 127.0.0.1 to match your confirmed active Uvicorn terminal
+const API = "http://127.0.0.1:8000"
 
 export default function Dashboard({ userId, profile }: { userId: string, profile: any }) {
   const [state, setState] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("roadmap")
   
-  // Loading Sequence State
   const [loadingStep, setLoadingStep] = useState(0)
   const steps = [
     "INITIALIZING_CORE_AGENTS",
@@ -33,10 +34,9 @@ export default function Dashboard({ userId, profile }: { userId: string, profile
       try {
         const res = await axios.post(`${API}/api/start`, { user_id: userId, profile })
         setState(res.data.state)
-        // Keep boot screen visible for a moment for the "effect"
         setTimeout(() => setLoading(false), 5000) 
       } catch (e) {
-        console.error(e)
+        console.error("BOOT_FAILURE:", e);
         setLoading(false)
       }
     }
@@ -67,20 +67,14 @@ export default function Dashboard({ userId, profile }: { userId: string, profile
       <div className="cp-boot-container">
         <div className="cp-loader-box">
           <h1 className="cp-boot-title">CAREERPILOT_OS_v3.0</h1>
-          
           <div className="cp-step-display">
             <span className="cp-step-text">{steps[loadingStep]}</span>
           </div>
-
           <div className="cp-progress-container">
             <div 
               className="cp-progress-bar" 
               style={{ width: `${((loadingStep + 1) / steps.length) * 100}%` }}
             />
-          </div>
-
-          <div className="cp-boot-footer">
-            RUNNING_PROFILER // STATION_0x442 // {loadingStep + 1}/{steps.length}
           </div>
         </div>
       </div>
@@ -94,12 +88,26 @@ export default function Dashboard({ userId, profile }: { userId: string, profile
         .cp-step-text { color: #f97316; font-size: 10px; letter-spacing: 1px; display: block; }
         .cp-progress-container { width: 100%; height: 2px; background: #1a1a1a; margin-bottom: 15px; }
         .cp-progress-bar { height: 100%; background: #f97316; transition: width 0.5s ease-in-out; }
-        .cp-boot-footer { font-size: 8px; color: #404040; letter-spacing: 1px; display: flex; justify-content: space-between; }
       `}</style>
     </div>
   )
 
   const tabs = ["roadmap", "courses", "schedule", "jobs", "reasoning", "approvals"]
+
+  // --- LOGIC FOR BUTTON VISIBILITY ---
+  // If backend returns 0 jobs, we inject one for testing the apply flow
+  const currentJobs = (state?.job_listings && state.job_listings.length > 0) 
+    ? state.job_listings 
+    : [{
+        title: "Senior Web Developer",
+        company: "CAREERPILOT_CORP",
+        location: "Remote",
+        match_pct: 98,
+        why_good_match: "Resume alignment detected with core PilotOS stack.",
+        user_has: ["React", "FastAPI", "Tailwind"],
+        user_missing: ["Kubernetes"],
+        recruiter_email: "itsmelilac143@gmail.com" // Update as needed
+      }];
 
   return (
     <div className="cp-dashboard-shell">
@@ -114,7 +122,6 @@ export default function Dashboard({ userId, profile }: { userId: string, profile
              </div>
           </div>
           <div className="cp-meta">
-             {/* Passed nextAgent correctly here */}
              <AgentStatus nextAgent={state?.next_agent} />
           </div>
         </header>
@@ -144,6 +151,7 @@ export default function Dashboard({ userId, profile }: { userId: string, profile
           </nav>
           <div className="cp-content">
              {activeTab === "roadmap" && <RoadmapView roadmap={state?.roadmap} progress={state?.progress} />}
+             
              {activeTab === "courses" && (
                 <div className="cp-grid-courses">
                   {state?.courses?.map((c: any, i: number) => (
@@ -155,6 +163,7 @@ export default function Dashboard({ userId, profile }: { userId: string, profile
                   ))}
                 </div>
              )}
+
              {activeTab === "schedule" && (
                 <div className="cp-schedule-box">
                   {state?.schedule?.weekly_schedule && Object.entries(state.schedule.weekly_schedule).map(([day, info]: any) => (
@@ -165,8 +174,16 @@ export default function Dashboard({ userId, profile }: { userId: string, profile
                   ))}
                 </div>
              )}
-             {activeTab === "jobs" && <JobTracker jobs={state?.job_listings} />}
+
+             {activeTab === "jobs" && (
+                <div className="cp-jobs-container">
+                  <ResumeUpload userId={userId} />
+                  <JobTracker jobs={currentJobs} userId={userId} />
+                </div>
+             )}
+
              {activeTab === "reasoning" && <ReasoningLog log={state?.reasoning_log} />}
+             
              {activeTab === "approvals" && (
                 <Approvals 
                   approvals={state?.pending_approvals || []} 
@@ -204,6 +221,7 @@ export default function Dashboard({ userId, profile }: { userId: string, profile
         .cp-c-why { font-size: 11px; color: #f97316; font-style: italic; }
         .cp-s-row { display: flex; gap: 20px; padding: 10px 0; border-bottom: 1px solid #1a1a1a; font-size: 12px; }
         .cp-s-day { width: 80px; color: #f97316; font-weight: bold; }
+        .cp-jobs-container { display: flex; flex-direction: column; gap: 20px; }
       `}</style>
     </div>
   )

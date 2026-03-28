@@ -1,8 +1,51 @@
 "use client"
 
-interface Props { jobs: any[] }
+import React, { useState } from 'react';
+import axios from 'axios';
 
-export default function JobTracker({ jobs }: Props) {
+interface Props { 
+  jobs: any[]; 
+  userId: string; 
+}
+
+export default function JobTracker({ jobs, userId }: Props) {
+  const [applyingIndex, setApplyingIndex] = useState<number | null>(null);
+
+  const handleAutoApply = async (job: any, index: number) => {
+    // Safety check: Ensure userId exists before calling the backend
+    if (!userId) {
+      alert("SYSTEM_ERROR: USER_ID_MISSING. Please refresh the session.");
+      return;
+    }
+
+    setApplyingIndex(index);
+    
+    try {
+      // Using 127.0.0.1:8000 for maximum reliability on local Windows setups
+      const response = await axios.post('http://127.0.0.1:8000/api/apply-now', {
+        user_id: userId,
+        job: job
+      });
+
+      if (response.data.status === 'SUCCESS') {
+        alert(`SUCCESS: Outreach dispatched for ${job.title} at ${job.company}`);
+      } else {
+        // This handles cases like 'RESUME_NOT_FOUND' or SMTP errors
+        alert(`DISPATCH_REJECTED: ${response.data.message}`);
+      }
+    } catch (err: any) {
+      console.error("Application Error Detail:", err);
+      
+      if (!err.response) {
+        alert("OFFLINE: Backend unreachable. Verify Uvicorn is running on port 8000.");
+      } else {
+        alert(`CRITICAL_ERROR: ${err.response.data.detail || "SERVER_CRASH"}`);
+      }
+    } finally {
+      setApplyingIndex(null);
+    }
+  };
+
   if (!jobs?.length) return (
     <div className="cp-job-empty">
       <div className="cp-warning-icon">⚠</div>
@@ -21,24 +64,21 @@ export default function JobTracker({ jobs }: Props) {
       <div className="cp-job-list">
         {jobs.map((job: any, i: number) => (
           <div key={i} className="cp-job-entry">
-            {/* Top Row: Identification */}
             <div className="cp-entry-top">
               <div className="cp-id-group">
-                <div className="cp-job-title">{job.title.toUpperCase()}</div>
-                <div className="cp-job-loc">{job.company} // {job.location.toUpperCase()}</div>
+                <div className="cp-job-title">{job.title?.toUpperCase() || "UNKNOWN_ROLE"}</div>
+                <div className="cp-job-loc">{job.company} // {job.location?.toUpperCase() || "REMOTE"}</div>
               </div>
               <div className="cp-match-dial">
-                <span className="cp-match-val">{job.match_pct}%</span>
+                <span className="cp-match-val">{job.match_pct || 0}%</span>
                 <span className="cp-match-label">MATCH_INDEX</span>
               </div>
             </div>
 
-            {/* AI Analysis Message */}
             <div className="cp-analysis-strip">
-              <span className="cp-ai-tag">AI_INSIGHT:</span> {job.why_good_match}
+              <span className="cp-ai-tag">AI_INSIGHT:</span> {job.why_good_match || "Analyzing fit..."}
             </div>
 
-            {/* Skill Matrix */}
             <div className="cp-skill-matrix">
               {job.user_has?.map((s: string) => (
                 <div key={s} className="cp-skill-tag has">
@@ -52,10 +92,18 @@ export default function JobTracker({ jobs }: Props) {
               ))}
             </div>
 
-            {/* Bottom Action */}
             <div className="cp-entry-footer">
               <span className="cp-ref">REF_ID: JOB_SCAN_{i}</span>
-              <button className="cp-view-btn">ACCESS_LISTING</button>
+              <div className="cp-action-buttons">
+                <button 
+                  className={`cp-apply-btn ${applyingIndex === i ? 'loading' : ''}`}
+                  onClick={() => handleAutoApply(job, i)}
+                  disabled={applyingIndex !== null}
+                >
+                  {applyingIndex === i ? "DISPATCHING..." : "INITIALIZE_AUTO_APPLY"}
+                </button>
+                <button className="cp-view-btn">VIEW_LISTING</button>
+              </div>
             </div>
           </div>
         ))}
@@ -64,73 +112,40 @@ export default function JobTracker({ jobs }: Props) {
       <style jsx>{`
         .cp-job-shell { font-family: monospace; }
         .cp-job-header { font-size: 10px; color: #404040; letter-spacing: 3px; margin-bottom: 25px; }
-        
         .cp-job-list { display: flex; flex-direction: column; gap: 20px; }
-        
-        .cp-job-entry { 
-          background: #080808; 
-          border: 1px solid #1a1a1a; 
-          padding: 20px;
-          position: relative;
-          overflow: hidden;
-        }
-
-        /* Top Identification Section */
+        .cp-job-entry { background: #080808; border: 1px solid #1a1a1a; padding: 20px; }
         .cp-entry-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
         .cp-job-title { color: #fff; font-size: 15px; font-weight: 900; letter-spacing: 1px; }
         .cp-job-loc { color: #525252; font-size: 10px; margin-top: 4px; }
-        
         .cp-match-dial { text-align: right; }
         .cp-match-val { display: block; color: #f97316; font-size: 18px; font-weight: 900; }
         .cp-match-label { color: #404040; font-size: 8px; font-weight: bold; }
-
-        /* AI Analysis Message */
-        .cp-analysis-strip { 
-          font-size: 11px; 
-          color: #d4d4d4; 
-          padding: 10px; 
-          background: rgba(249, 115, 22, 0.03); 
-          border-left: 2px solid #f97316;
-          margin-bottom: 15px;
-          line-height: 1.4;
-        }
+        .cp-analysis-strip { font-size: 11px; color: #d4d4d4; padding: 10px; background: rgba(249, 115, 22, 0.03); border-left: 2px solid #f97316; margin-bottom: 15px; }
         .cp-ai-tag { color: #f97316; font-weight: 900; margin-right: 8px; }
-
-        /* Skill Matrix */
         .cp-skill-matrix { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
-        .cp-skill-tag { 
-          font-size: 9px; 
-          padding: 4px 8px; 
-          border: 1px solid #1a1a1a; 
-          display: flex; 
-          align-items: center; 
-          gap: 6px; 
-        }
+        .cp-skill-tag { font-size: 9px; padding: 4px 8px; border: 1px solid #1a1a1a; display: flex; align-items: center; gap: 6px; }
         .cp-skill-tag.has { color: #a3a3a3; background: #111; }
         .cp-skill-tag.has .cp-status-bit { color: #f97316; font-weight: 900; }
-        
         .cp-skill-tag.lacks { color: #525252; background: #0a0a0a; border-style: dashed; }
-        .cp-skill-tag.lacks .cp-status-bit { color: #404040; }
-
-        /* Footer */
-        .cp-entry-footer { 
-          display: flex; 
-          justify-content: space-between; 
-          align-items: center; 
-          padding-top: 15px; 
-          border-top: 1px solid #141414;
-        }
+        .cp-entry-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 15px; border-top: 1px solid #141414; }
         .cp-ref { color: #262626; font-size: 8px; }
-        .cp-view-btn { 
-          background: transparent; 
-          border: 1px solid #262626; 
-          color: #737373; 
+        .cp-action-buttons { display: flex; gap: 10px; }
+        .cp-apply-btn { 
+          background: #f97316; 
+          color: #000; 
+          border: none; 
+          padding: 8px 16px; 
+          font-family: monospace; 
+          font-weight: 900; 
           font-size: 9px; 
-          padding: 6px 12px; 
           cursor: pointer;
-          font-weight: bold;
+          transition: 0.2s;
         }
-        .cp-view-btn:hover { color: #fff; border-color: #f97316; background: rgba(249, 115, 22, 0.1); }
+        .cp-apply-btn:hover { background: #fff; }
+        .cp-apply-btn.loading { background: #404040; color: #111; cursor: not-allowed; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .cp-view-btn { background: transparent; border: 1px solid #262626; color: #737373; font-size: 9px; padding: 8px 12px; cursor: pointer; }
+        .cp-view-btn:hover { color: #fff; border-color: #f97316; }
       `}</style>
     </div>
   )
